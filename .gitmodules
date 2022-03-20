@@ -1,0 +1,3 @@
+[submodule "6510_Emulator"]
+	path = 6510_Emulator
+	url = https://github.com/paxman101/6510_Emulator.git

@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.22)
+project(c64_emulator)
+
+set(CMAKE_CXX_STANDARD 20)
+
+add_subdirectory(6510_Emulator)
+
+find_package(Threads REQUIRED)
+
+add_executable(c64_emulator main.cpp)
+
+target_link_libraries(c64_emulator 6510 Threads::Threads)
