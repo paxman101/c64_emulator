@@ -5,6 +5,10 @@
 #include "memory.h"
 
 #include <cassert>
+#include <cstdio>
+#include <iostream>
+#include <fstream>
+#include <iterator>
 
 uint_fast8_t Memory::getZone(uint16_t address) {
     for (int i = 6; i >= 0; i--) {
@@ -13,6 +17,25 @@ uint_fast8_t Memory::getZone(uint16_t address) {
         }
     }
     assert(false);
+}
+
+void Memory::loadRomData(Bank *rom, const char *path) {
+    std::ifstream in_stream {path, std::ios::binary};
+
+    if (!in_stream.is_open()) {
+        std::perror("Memory::loadRomData");
+    }
+
+    uint_fast16_t offset = 0x0000;
+    for (auto iter = std::istreambuf_iterator<char>{in_stream}; iter != std::istreambuf_iterator<char>{}; ++iter) {
+        rom->data[offset++] = *iter;
+    }
+}
+
+Memory::Memory() {
+    loadRomData(&basic_rom_, PROJECT_ROOT"/roms/basic.901226-01.bin");
+    loadRomData(&char_rom_, PROJECT_ROOT"/roms/c64.bin");
+    loadRomData(&kernal_rom_, PROJECT_ROOT"/roms/kernal.901227-03.bin");
 }
 
 uint8_t Memory::getValue(uint16_t address) {
@@ -34,10 +57,4 @@ void Memory::setValue(uint16_t address, uint8_t val) {
 
     uint16_t offset = address - zone_base_addrs_[zone_with_val];
     bank_with_val->data[offset] = val;
-}
-
-void Memory::loadRomData() {
-    loadBinFile(PROJECT_ROOT"/roms/basic.901226-01.bin", 0xA000, 0, 0);
-    loadBinFile(PROJECT_ROOT"/roms/c64.bin", 0xD000, 0, 0);
-    loadBinFile(PROJECT_ROOT"/roms/kernal.901227-03.bin", 0xE000, 0, 0);
 }

@@ -3,13 +3,18 @@
 
 extern "C" {
 #include "cpu.h"
+#include "6510_Emulator/memory.h"
+}
 #include "memory.h"
+
+static Memory mem;
+
+static uint8_t getMemoryVal(uint16_t address) {
+    return mem.getValue(address);
 }
 
-static uint8_t *getMemory(uint16_t address) {
-    static auto *mem_arr = new uint8_t[1 << 16];
-
-    return &mem_arr[address];
+static void setMemoryVal(uint16_t address, uint8_t val) {
+    mem.setValue(address, val);
 }
 
 static void threadSleep(double sec) {
@@ -17,17 +22,10 @@ static void threadSleep(double sec) {
 }
 
 int main() {
-    initMemory(getMemory);
-
-    loadBinFile(PROJECT_ROOT"/6510_Emulator/testing/nestest.nes", 0x8000, 0x0010, 0x4000);
-    loadBinFile(PROJECT_ROOT"/6510_Emulator/testing/nestest.nes", 0xC000, 0x0010, 0x4000);
-
-    uint8_t *mem = getMemoryPtr(INT_RESET+1);
-    *mem = 0xC0;
-    *(mem - 1) = 0x00;
+    initMemoryFuncs(getMemoryVal, setMemoryVal);
 
     setSleepFunction(threadSleep);
-    //setCPUFreq(1000000);
+    setCPUFreq(1000000);
     initCPU();
     std::thread cpu_thread{runLoop, stdout};
     cpu_thread.join();

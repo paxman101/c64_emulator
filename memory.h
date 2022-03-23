@@ -7,8 +7,7 @@
 
 #include <array>
 #include <unordered_map>
-
-#include "6510_Emulator/memory.h"
+#include <cstdint>
 
 class Memory {
 private:
@@ -59,15 +58,16 @@ private:
     // Get the zone number/index that where an address maps to
     static inline uint_fast8_t getZone(uint16_t addr);
 
+    static void loadRomData(Bank *rom, const char *path);
+
 public:
+    Memory();
 
     // Get memory at address in the currently switched banks
     uint8_t getValue(uint16_t address);
 
     // Set memory at address in the currently switched banks
     void setValue(uint16_t address, uint8_t val);
-
-    static void loadRomData();
 };
 
 
