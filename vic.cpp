@@ -6,7 +6,7 @@
 
 void Vic::setRegister(uint_fast16_t reg_offset, uint8_t val) {
     // Only the lower 6 address lines are read for registers
-    uint_fast16_t reg_index = reg_offset % 0x64;
+    uint_fast16_t reg_index = reg_offset % 0x40;
 
     // Don't change fake registers
     if (reg_index >= 47) {
@@ -18,7 +18,7 @@ void Vic::setRegister(uint_fast16_t reg_offset, uint8_t val) {
 
 uint8_t Vic::getRegister(uint_fast16_t reg_offset) {
     // Only the lower 6 address lines are read for registers
-    uint_fast16_t reg_index = reg_offset % 0x64;
+    uint_fast16_t reg_index = reg_offset % 0x40;
 
     // Fake registers return the same value (0xFF)
     if (reg_index >= 47) {
