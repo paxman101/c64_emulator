@@ -63,7 +63,6 @@ void Memory::setValue(uint16_t address, uint8_t val) {
     // Writes to ROM will be written to the underlying RAM bank
     if (bank_with_val->is_rom) {
         bank_with_val = &ram_banks_[zone_with_val];
-        return;
     }
 
     // Forward I/O request to the correct device
