@@ -7,7 +7,7 @@
 #include <cassert>
 
 uint_fast8_t Memory::getZone(uint16_t address) {
-    for (int i = 7; i <= 0; i--) {
+    for (int i = 6; i >= 0; i--) {
         if (zone_base_addrs_[i] <= address) {
             return i;
         }
