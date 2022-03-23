@@ -9,8 +9,12 @@
 #include <unordered_map>
 #include <cstdint>
 
+#include "vic.h"
+
 class Memory {
 private:
+    Vic & vic_;
+
     // The base addresses of each bank or zone area within memory.
     constexpr static const uint16_t zone_base_addrs_[] = {0x0000, 0x1000, 0x8000, 0xA000, 0xC000, 0xD000, 0xE000};
     // The size of each bank area or zone
@@ -61,7 +65,7 @@ private:
     static void loadRomData(Bank *rom, const char *path);
 
 public:
-    Memory();
+    explicit Memory(Vic &vic);
 
     // Get memory at address in the currently switched banks
     uint8_t getValue(uint16_t address);

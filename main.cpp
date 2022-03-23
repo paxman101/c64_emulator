@@ -7,7 +7,8 @@ extern "C" {
 }
 #include "memory.h"
 
-static Memory mem;
+static Vic vic{};
+static Memory mem{vic};
 
 static uint8_t getMemoryVal(uint16_t address) {
     return mem.getValue(address);
