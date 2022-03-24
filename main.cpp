@@ -6,10 +6,12 @@ extern "C" {
 #include "6510_Emulator/memory.h"
 }
 #include "memory.h"
+#include "colorram.h"
 
-static Vic vic{};
+static ColorRam cram{};
+static Vic vic{cram};
 static Sid sid{};
-static Memory mem{vic, sid};
+static Memory mem{vic, sid, cram};
 
 static uint8_t getMemoryVal(uint16_t address) {
     return mem.getValue(address);
