@@ -11,7 +11,9 @@ extern "C" {
 static ColorRam cram{};
 static Vic vic{cram};
 static Sid sid{};
-static Memory mem{vic, sid, cram};
+static Cia1 cia1{};
+static Cia2 cia2{};
+static Memory mem{vic, sid, cram, cia1, cia2};
 
 static uint8_t getMemoryVal(uint16_t address) {
     return mem.getValue(address);

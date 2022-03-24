@@ -12,12 +12,15 @@
 #include "vic.h"
 #include "sid.h"
 #include "colorram.h"
+#include "cia.h"
 
 class Memory {
 private:
     Vic &vic_;
     Sid &sid_;
     ColorRam &cram_;
+    Cia1 &cia1_;
+    Cia2 &cia2_;
 
     // The base addresses of each bank or zone area within memory.
     constexpr static const uint16_t zone_base_addrs_[] = {0x0000, 0x1000, 0x8000, 0xA000, 0xC000, 0xD000, 0xE000};
@@ -69,7 +72,7 @@ private:
     static void loadRomData(Bank *rom, const char *path);
 
 public:
-    Memory(Vic &vic, Sid &sid, ColorRam &cram);
+    Memory(Vic &vic, Sid &sid, ColorRam &cram, Cia1 &cia1, Cia2 &cia2);
 
     // Get memory at address in the currently switched banks
     uint8_t getValue(uint16_t address);
