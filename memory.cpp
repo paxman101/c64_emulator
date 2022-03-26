@@ -32,8 +32,7 @@ void Memory::loadRomData(Bank *rom, const char *path) {
     }
 }
 
-Memory::Memory(Vic &vic, Sid &sid, ColorRam &cram, Cia1 &cia1, Cia2 &cia2) : vic_{vic}, sid_{sid}, cram_{cram},
-                                                                             cia1_{cia1}, cia2_{cia2} {
+Memory::Memory() {
     loadRomData(&basic_rom_, PROJECT_ROOT"/roms/basic.901226-01.bin");
     loadRomData(&char_rom_, PROJECT_ROOT"/roms/c64.bin");
     loadRomData(&kernal_rom_, PROJECT_ROOT"/roms/kernal.901227-03.bin");
@@ -48,23 +47,23 @@ uint8_t Memory::getValue(uint16_t address) {
     if (bank_with_val == &dummy_io_bank_) {
         // VIC II register location
         if (offset < 0x400) {
-            return vic_.getRegister(offset);
+            return vic_->getRegister(offset);
         }
         // SID registers
         else if (offset < 0x800) {
-            return sid_.getRegister(offset - 0x400);
+            return sid_->getRegister(offset - 0x400);
         }
         // color ram
         else if (offset < 0xC00) {
-            return cram_.getValue(offset - 0x800);
+            return cram_->getValue(offset - 0x800);
         }
         // CIA1 registers
         else if (offset < 0xD00) {
-            return cia1_.getRegister(offset - 0xC00);
+            return cia1_->getRegister(offset - 0xC00);
         }
         // CIA2 registers
         else if (offset < 0xE00) {
-            return cia2_.getRegister(offset - 0xD00);
+            return cia2_->getRegister(offset - 0xD00);
         }
         // I/O areas 1 and 2. Empty for now
         else if (offset < 0x1000) {
@@ -93,22 +92,22 @@ void Memory::setValue(uint16_t address, uint8_t val) {
     if (bank_with_val == &dummy_io_bank_) {
         // VIC II register location
         if (offset < 0x400) {
-            vic_.setRegister(offset, val);
+            vic_->setRegister(offset, val);
         }
         // SID register location
         else if (offset < 0x800) {
-            sid_.setRegister(offset - 0x400, val);
+            sid_->setRegister(offset - 0x400, val);
         }
         else if (offset < 0x0C00) {
-            cram_.setValue(offset - 0x800, val);
+            cram_->setValue(offset - 0x800, val);
         }
         // CIA1 registers
         else if (offset < 0xD00) {
-            cia1_.setRegister(offset - 0xC00, val);
+            cia1_->setRegister(offset - 0xC00, val);
         }
         // CIA2 registers
         else if (offset < 0xE00) {
-            cia2_.setRegister(offset - 0xD00, val);
+            cia2_->setRegister(offset - 0xD00, val);
         }
         // I/O areas 1 and 2. Empty for now
         else if (offset < 0x1000) {
