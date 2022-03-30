@@ -189,6 +189,7 @@ void Vic::draw() {
     uint16_t screen_y = current_raster_ > last_vblank_line ? (current_raster_ - last_vblank_line) : current_raster_ + (first_vblank_line - last_vblank_line);
     const uint8_t *colors;
 
+    // TODO: Figure out what's causing us to need the -1
     uint16_t c_addr = vc_+ -1 + screen_addr;
     uint8_t c_val = getMem(c_addr);
 
@@ -220,16 +221,7 @@ void Vic::draw() {
                 our_x >= first_visible_x_coord ? our_x - first_visible_x_coord : (max_x_coord - first_visible_x_coord) +
                                                                                  our_x;
 
-        if (current_raster_ == 245 && screen_x > 360) {
-            io_->drawPixel(screen_x, screen_y, 205, 0, 100, 255);
-        }
-        if (current_raster_ == 55) {
-
-        }
-        else {
-            io_->drawPixel(screen_x, screen_y, colors[0], colors[1], colors[2], 255);
-        }
-
+        io_->drawPixel(screen_x, screen_y, colors[0], colors[1], colors[2], 255);
     }
     // vc_ and vmli_ are incremented after g-accesses in display state.
     if (is_display_state_ && !main_border_ff_) {
