@@ -76,10 +76,6 @@ uint8_t Vic::getRegister(uint_fast16_t reg_offset) {
 
 void Vic::updateStates() {
     current_cycle_++;
-    current_x_ += 8;
-    if (current_x_ + 16 >= max_x_coord) {
-        current_x_ = 0;
-    }
 
     // Check for bad line by the given condition from vic-ii.txt:
     //     A Bad Line Condition is given at any arbitrary clock cycle, if at the
@@ -116,12 +112,59 @@ void Vic::updateStates() {
             rc_ = 0;
         }
     }
+}
 
+void Vic::updateBorderStates(uint16_t x) {
     // bit 3 of control registers refer to rsel and csel respectively
     bool rsel = (registers_[CTRL1] & 0x08) >> 3;
     bool csel = (registers_[CTRL2] & 0x08) >> 3;
 
+    bool den = (registers_[CTRL1] & 0x10) >> 4;
+
+    // border unit comparisons
+    uint16_t left_compare = csel ? 0x18 : 0x1f;
+    uint16_t right_compare = csel ? 0x158 : 0x14f;
+    uint16_t top_compare = rsel ? 0x33 : 0x37;
+    uint16_t bottom_compare = rsel ? 0xfb : 0xf7;
+    // When border unit flip flops are switched:
+    // 1. If the X coordinate reaches the right comparison value, the main border
+    //    flip flop is set.
+    if (x == right_compare) {
+        main_border_ff_ = true;
+    }
+    if (current_cycle_ == 63) {
+        // 2. If the Y coordinate reaches the bottom comparison value in cycle 63, the
+        //    vertical border flip flop is set.
+        if (current_raster_ == bottom_compare) {
+            vertical_border_ff_ = true;
+        }
+        // 3. If the Y coordinate reaches the top comparison value in cycle 63 and the
+        //    DEN bit in register $d011 is set, the vertical border flip flop is
+        //    reset.
+        else if (current_raster_ == top_compare && den) {
+            vertical_border_ff_ = false;
+        }
+    }
+    if (x == left_compare) {
+        // 4. If the X coordinate reaches the left comparison value and the Y
+        //    coordinate reaches the bottom one, the vertical border flip flop is set.
+        if (current_raster_ == bottom_compare) {
+            vertical_border_ff_ = true;
+        }
+        // 5. If the X coordinate reaches the left comparison value and the Y
+        //    coordinate reaches the top one and the DEN bit in register $d011 is set,
+        //    the vertical border flip flop is reset.
+        else if (current_raster_ == top_compare && den) {
+            vertical_border_ff_ = false;
+        }
+        // 6. If the X coordinate reaches the left comparison value and the vertical
+        //   border flip flop is not set, the main flip flop is reset.
+        if (!vertical_border_ff_) {
+            main_border_ff_ = false;
+        }
+    }
 }
+
 
 void Vic::incrementRaster() {
     current_raster_ = (registers_[CTRL1] >> 7) * 0x100 + registers_[RST];
@@ -142,31 +185,54 @@ void Vic::draw() {
     uint16_t char_addr = (registers_[MEM_PTRS] & 0xE) << 10;
     uint16_t screen_addr = (registers_[MEM_PTRS] & 0xF0) << 6;
 
-    uint16_t g_addr = 0x3fff;
-    if (is_display_state_) {
-        uint16_t c_addr = vc_ + screen_addr;
-        uint8_t c_val = getMem(c_addr);
-        if (c_val != 0 && c_val != 0x20) {
-//            printf("CVAL = %02X\n", c_val);
+    const uint8_t *bg_color_vals = palette[registers_[B0C] & 0x0F];
+    uint16_t screen_y = current_raster_ > last_vblank_line ? (current_raster_ - last_vblank_line) : current_raster_ + (first_vblank_line - last_vblank_line);
+    const uint8_t *colors;
+
+    uint16_t c_addr = vc_+ -1 + screen_addr;
+    uint8_t c_val = getMem(c_addr);
+
+    uint16_t g_addr = is_display_state_ ?  rc_ + (c_val << 3) + char_addr : 0x3fff;
+    uint8_t g_val = getMem(g_addr);
+
+    // If we are in idle, the foreground color will be black.
+    uint8_t cram_color = is_display_state_ ? cram_->getValue(c_val) & 0x0F : 0;
+
+    for (int i = 7; i >= 0; i--) {
+        uint16_t our_x = current_x_ + (8 - i);
+
+        // Don't render pixels outside the visible range
+        if (our_x < first_visible_x_coord && our_x > last_visible_x_coord) {
+            break;
         }
 
-        g_addr = rc_ + (c_val << 3) + char_addr;
-        uint8_t g_val = getMem(g_addr);
-
-        uint8_t cram_color = cram_->getValue(c_val) & 0x0F;
-        uint8_t bg_color = registers_[B0C] & 0x0F;
-
-        for (int i = 0; i < 8; i++) {
+        // Check if we should draw border. Border preempts all other layers.
+        updateBorderStates(our_x);
+        if (main_border_ff_) {
+            colors = palette[registers_[EC] & 0xF];
+        }
+        else {
             bool pix_val = (g_val & (1 << i)) >> i;
-            auto our_x = current_x_ + (8 - i);
+            colors = pix_val ? palette[cram_color] : bg_color_vals;
+        }
 
-            const uint8_t *colors = pix_val ? palette[cram_color] : palette[bg_color];
-            auto screen_x = our_x < first_visible_x_coord ? (max_x_coord - first_visible_x_coord) + our_x : first_visible_x_coord - our_x;
-            auto screen_y = current_raster_ > last_vblank_line ? (current_raster_ - last_vblank_line) : current_raster_ + last_vblank_line;
-//            auto screen_y = current_raster_;
+        uint16_t screen_x =
+                our_x >= first_visible_x_coord ? our_x - first_visible_x_coord : (max_x_coord - first_visible_x_coord) +
+                                                                                 our_x;
+
+        if (current_raster_ == 245 && screen_x > 360) {
+            io_->drawPixel(screen_x, screen_y, 205, 0, 100, 255);
+        }
+        if (current_raster_ == 55) {
+
+        }
+        else {
             io_->drawPixel(screen_x, screen_y, colors[0], colors[1], colors[2], 255);
         }
 
+    }
+    // vc_ and vmli_ are incremented after g-accesses in display state.
+    if (is_display_state_ && !main_border_ff_) {
         vc_++;
         vmli_++;
     }
@@ -178,17 +244,22 @@ void Vic::run() {
 
     // Vblank lines aren't drawn.
     if (current_raster_ < first_vblank_line || current_raster_ > last_vblank_line) {
-        if (current_x_ >= 0x18 || current_x_ <= 0x14e) {
-            draw();
-        }
+        draw();
     }
     if (is_badline_ && current_cycle_ >= 14 && current_cycle_ <= 54) {
 //        draw();
 //        current_cycle_ += 40;
     }
 
+    current_x_ += 8;
+    if (current_x_ >= max_x_coord) {
+        current_x_ = 0;
+    }
+    updateBorderStates(current_x_);
+
     // increment raster if done with line
     if (current_cycle_ == cycles_per_line) {
+//        printf("VC:%4d VCBASE:%4d \n", vc_, vc_base_);
         incrementRaster();
     }
     if (current_raster_ == first_vblank_line && current_cycle_ == 1) {

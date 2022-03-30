@@ -47,10 +47,13 @@ private:
         M0C, M1C, M2C, M3C, M4C, M5C, M6C, M7C
     };
 
-    constexpr static const uint8_t palette[][3] = {{  0,   0,   0}, {255, 255, 255}, {136,   0,   0}, {170, 255, 238},
-                                                   {204,  68, 204}, {  0, 204, 85}, {0, 0, 170}, {238, 238, 119},
-                                                   {221, 136, 85}, {102, 68, 0}, {255, 119, 119}, {51, 51, 51},
-                                                   {119, 119, 119}, {170, 255, 102}, {  0, 136, 255}, {187, 187, 187}};
+    // The 16 colors supported by the C64's palette given in RGB with the array index corresponding to the color code.
+    constexpr static const uint8_t palette[][3] = {
+            {  0,   0,   0}, {255, 255, 255}, {136,   0,   0}, {170, 255, 238},
+            {204,  68, 204}, {  0, 204,  85}, {  0,   0, 170}, {238, 238, 119},
+            {221, 136,  85}, {102,  68,   0}, {255, 119, 119}, { 51,  51,  51},
+            {119, 119, 119}, {170, 255, 102}, {  0, 136, 255}, {187, 187, 187}
+    };
 
     // The nitty-gritty details of the VIC II are covered here: http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt
     // There are two NTSC revisions: the 6567R56A and the 6567R8.
@@ -75,6 +78,7 @@ private:
 
     uint16_t current_raster_ = 0;
     uint8_t current_cycle_ = 0;
+    uint16_t current_x_ = 0;
     bool is_badline_ = false;
 
     // VIC II registers covered on https://www.c64-wiki.com/wiki/Page_208-211
@@ -85,7 +89,6 @@ private:
     const uint8_t fake_reg_ = 0xFF;
     // Line to cause a raster interrupt on. Set by writing reg RST and bit 7 of CTRL1.
     uint_fast16_t raster_int_ = std::numeric_limits<uint_fast16_t>::max();
-    uint16_t current_x_ = 0;
 
     // Buffers
     uint16_t v_matrix_buf_[40] {0};
@@ -97,6 +100,10 @@ private:
     uint_fast8_t  rc_ = 0;
     uint_fast8_t  vmli_ = 0;
 
+    // Border control flip flops
+    bool main_border_ff_ = false;
+    bool vertical_border_ff_ = false;
+
     // display state when true; idle state when false
     bool is_display_state_ = false;
 
@@ -107,6 +114,7 @@ private:
     uint8_t getMem(uint16_t address);
 
     void updateStates();
+    void updateBorderStates(uint16_t x);
     void incrementRaster();
     void draw();
 public:
