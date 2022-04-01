@@ -54,7 +54,7 @@ static void threadSleep(uint64_t cycles) {
 
 void run() {
     auto before = our_clock::now();
-//    cia1.run();
+    cia1.run();
     runCycle(nullptr);
     vic.run();
 
