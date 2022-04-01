@@ -17,6 +17,7 @@ uint_fast8_t Memory::getZone(uint16_t address) {
         }
     }
     assert(false);
+    return 0;
 }
 
 void Memory::loadRomData(Bank *rom, const char *path) {

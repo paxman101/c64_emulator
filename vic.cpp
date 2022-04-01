@@ -186,11 +186,12 @@ void Vic::draw() {
     uint16_t screen_addr = (registers_[MEM_PTRS] & 0xF0) << 6;
 
     const uint8_t *bg_color_vals = palette[registers_[B0C] & 0x0F];
-    uint16_t screen_y = current_raster_ > last_vblank_line ? (current_raster_ - last_vblank_line) : current_raster_ + (first_vblank_line - last_vblank_line);
+    uint16_t screen_y = current_raster_ > last_vblank_line
+            ? current_raster_ - last_vblank_line : current_raster_ + (visible_lines - first_vblank_line);
     const uint8_t *colors;
 
     // TODO: Figure out what's causing us to need the -1
-    uint16_t c_addr = vc_+ -1 + screen_addr;
+    uint16_t c_addr = vc_ + -1 + screen_addr;
     uint8_t c_val = getMem(c_addr);
 
     uint16_t g_addr = is_display_state_ ?  rc_ + (c_val << 3) + char_addr : 0x3fff;

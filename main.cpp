@@ -17,7 +17,7 @@ static Sid sid{};
 static Cia1 cia1{};
 static Cia2 cia2{};
 static Memory mem{};
-static Io io{};
+static Io io{Vic::visible_pixels_per_line+1, Vic::visible_lines};
 
 static std::mutex mutex;
 
@@ -31,7 +31,7 @@ static void setMemoryVal(uint16_t address, uint8_t val) {
 
 void runVic();
 
-using our_clock = std::chrono::high_resolution_clock;
+using our_clock = std::chrono::steady_clock;
 using our_ns = std::chrono::duration<double, std::nano>;
 
 static void threadSleep(uint64_t cycles) {
@@ -52,9 +52,15 @@ static void threadSleep(uint64_t cycles) {
     before = our_clock::now();
 }
 
-void runCPU(FILE *file) {
-//    mutex.lock();
-    runLoop(file);
+void run() {
+    auto before = our_clock::now();
+//    cia1.run();
+    runCycle(nullptr);
+    vic.run();
+
+    our_ns time = our_clock::now() - before;
+    std::this_thread::sleep_for(std::chrono::duration<double>(1/1000000) - time);
+//    std::cout << std::chrono::duration<double>(1/1000000) - time << "\n";
 }
 
 static void setPtrs() {
@@ -84,8 +90,11 @@ int main(int argc, char *argv[]) {
     setCPUFreq(10000000);
     initCPU();
 //    std::thread cpu_thread{runCPU, stdout};
+//    runLoop(nullptr);
 
-    runLoop(stdout);
+    while (true) {
+        run();
+    }
 
     return 0;
 }

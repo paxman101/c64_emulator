@@ -16,6 +16,19 @@ class Cia2;
 class Io;
 
 class Vic {
+public:
+    // Total lines to draw, including non-visible ones
+    static const uint16_t num_lines = 262;
+    static const uint8_t visible_lines = 234;
+    static const uint8_t cycles_per_line = 64;
+    static const uint8_t first_vblank_line = 13;
+    static const uint8_t last_vblank_line = 40;
+    static const uint16_t visible_pixels_per_line = 411;
+    // First x coord of a line
+    static const uint16_t first_x_coord = 0x19c;
+    static const uint16_t first_visible_x_coord = 0x1e8;
+    static const uint16_t last_visible_x_coord = 0x184;
+    static const uint16_t max_x_coord = 0x1ff;
 private:
     // Register names with their value corresponding to the register index
     enum VicRegister {
@@ -58,18 +71,6 @@ private:
     // The nitty-gritty details of the VIC II are covered here: http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt
     // There are two NTSC revisions: the 6567R56A and the 6567R8.
     // I will focus on the behavior of the R56A for now.
-
-    // Total lines to draw, including non-visible ones
-    static const uint16_t num_lines = 262;
-    static const uint8_t visible_lines = 234;
-    static const uint8_t cycles_per_line = 64;
-    static const uint8_t first_vblank_line = 13;
-    static const uint8_t last_vblank_line = 40;
-    // First x coord of a line
-    static const uint16_t first_x_coord = 0x19c;
-    static const uint16_t first_visible_x_coord = 0x1e8;
-    static const uint16_t last_visible_x_coord = 0x184;
-    static const uint16_t max_x_coord = 0x1ff;
 
     Memory *memory_ = nullptr;
     ColorRam *cram_ = nullptr;

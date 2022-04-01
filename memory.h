@@ -34,7 +34,7 @@ private:
         bool is_rom;
 
         Bank() = default;
-        explicit Bank(uint_fast8_t zone, bool is_rom = false) : data{new uint8_t[zone_sizes_[zone]]}, zone{zone},
+        explicit Bank(uint_fast8_t zone, bool is_rom = false) : data{new uint8_t[zone_sizes_[zone]]{0}}, zone{zone},
                                                                 is_rom{is_rom} {};
 
         ~Bank() { delete[] data; }
@@ -68,7 +68,7 @@ private:
                                          &dummy_io_bank_, &kernal_rom_};
 
     // Get the zone number/index that where an address maps to
-    static inline uint_fast8_t getZone(uint16_t addr);
+    static uint_fast8_t getZone(uint16_t addr);
 
     static void loadRomData(Bank *rom, const char *path);
 
