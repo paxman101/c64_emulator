@@ -256,7 +256,7 @@ void Vic::run() {
         incrementRaster();
     }
     if (current_raster_ == first_vblank_line && current_cycle_ == 1) {
-        io_->update();
+        io_->updateScreen();
         io_->clearScreen();
     }
 }

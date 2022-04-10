@@ -4,6 +4,8 @@
 
 #include "cia.h"
 
+#include "io.h"
+
 extern "C" {
 #include "cpu.h"
 }
@@ -30,6 +32,12 @@ void Cia1::setRegister(uint_fast16_t reg_offset, uint8_t val) {
     uint_fast16_t reg_index = reg_offset % 0x10;
 
     switch(reg_offset) {
+        case PRA:
+            keyboard_col_mask_ = val;
+            break;
+        case PRB:
+            keyboard_row_mask_ = val;
+            break;
         case TA_LO:
             timer_a_latch_lo_ = val;
             break;
@@ -76,6 +84,27 @@ uint8_t Cia1::getRegister(uint_fast16_t reg_offset) {
     uint_fast16_t reg_index = reg_offset % 0x10;
 
     switch (reg_offset) {
+        // Reading keyboard: https://paulnotebook.net/tag/keyboard-matrix/
+        case PRA: {
+            auto pair = io_->getKeyboardState();
+            printf("vals: %02X %02X\n", pair.first, pair.second);
+            return pair.second ^ keyboard_row_mask_;
+
+        }
+        case PRB: {
+//            auto pair = io_->getKeyboardState();
+//            // If they share any 0 bits
+//            uint8_t inv_pair = ~pair.first;
+//            uint8_t inv_col_mask = ~keyboard_col_mask_;
+//            if (inv_pair & inv_col_mask) {
+//
+//                return pair.second;
+//            }
+//            else {
+//                return 0xFF;
+//            }
+            return io_->getKeysByColumn(keyboard_col_mask_);
+        }
         // Reading ICR returns the interrupt status bits and also clears them
         case ICR: {
             uint8_t prev_interrupt_status = interrupt_status_;
@@ -104,8 +133,15 @@ void Cia1::run() {
         // check for "underflow" (it's really overflow)
         if (timer_val > temp) {
             interrupt_status_ |= 0x1;
+            // CRA if bit 3 = 1, then stop timer. Else reload from latch.
+            if ((registers[CRA] & 0x4) >> 3) {
+                timer_a_running_ = false;
+            }
+            else {
+                timer_val = (timer_a_latch_hi_ << 8) + timer_a_latch_lo_;
+            }
         }
-        registers[TA_LO] = timer_val & 0xF;
+        registers[TA_LO] = timer_val & 0xFF;
         registers[TA_HI] = timer_val >> 8;
     }
     if (timer_b_running_) {
@@ -115,8 +151,15 @@ void Cia1::run() {
         // check for "underflow" (it's really overflow)
         if (timer_val > temp) {
             interrupt_status_ |= 0x2;
+            // CRB if bit 3 = 1, then stop timer. Else reload from latch.
+            if ((registers[CRB] & 0x4) >> 3) {
+                timer_a_running_ = false;
+            }
+            else {
+                timer_val = (timer_b_latch_hi_ << 8) + timer_b_latch_lo_;
+            }
         }
-        registers[TB_LO] = timer_val & 0xF;
+        registers[TB_LO] = timer_val & 0xFF;
         registers[TB_HI] = timer_val >> 8;
     }
     // cause interrupt if needed

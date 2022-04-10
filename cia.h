@@ -8,9 +8,11 @@
 #include <cstdint>
 #include <chrono>
 
+class Io;
+
 // https://www.c64-wiki.com/wiki/CIA
 // There are two CIA chips on the C64 with many shared functions
-// Each chip has 16 registers that repeat within their adress space
+// Each chip has 16 registers that repeat within their address space
 
 class Cia1 {
     using clock = std::chrono::steady_clock;
@@ -29,6 +31,8 @@ private:
         CRA, CRB,
     };
 
+    Io *io_;
+
     time_point start_time_;
     time_point current_time_;
 
@@ -45,9 +49,14 @@ private:
     uint8_t timer_b_latch_lo_ = 0;
     uint8_t timer_b_latch_hi_ = 0;
 
+    uint8_t keyboard_col_mask_ = 0;
+    uint8_t keyboard_row_mask_ = 0;
+
     void updateClockRegisters();
 
 public:
+    void setIo(Io *io) { io_ = io; }
+
     void setRegister(uint_fast16_t reg_offset, uint8_t val);
 
     uint8_t getRegister(uint_fast16_t reg_offset);

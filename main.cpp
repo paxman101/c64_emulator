@@ -31,17 +31,17 @@ static void setMemoryVal(uint16_t address, uint8_t val) {
 
 void runVic();
 
-using our_clock = std::chrono::steady_clock;
-using our_ns = std::chrono::duration<double, std::nano>;
+using our_clock = std::chrono::high_resolution_clock;
+using our_ns = std::chrono::nanoseconds;
 
 static void threadSleep(uint64_t cycles) {
     static auto before = our_clock::now();
     static unsigned total_cycles = 0;
     total_cycles += cycles;
-    our_ns time = our_clock::now() - before;
+//    our_ns time = our_clock::now() - before;
 //    vic.run();
 //    mutex.unlock();
-    std::this_thread::sleep_for(std::chrono::duration<double>(cycles * 1/1000000) - time);
+//    std::this_thread::sleep_for(std::chrono::duration<double>(cycles * 1/1000000) - time);
 //    std::this_thread::yield();
 //    mutex.lock();
     runVic();
@@ -51,19 +51,35 @@ static void threadSleep(uint64_t cycles) {
 //    }
     before = our_clock::now();
 }
+using namespace std::literals::chrono_literals;
+
+auto clock_speed = 1000ns;
 
 void run() {
-    auto before = our_clock::now();
+    static unsigned current_cycle = 0;
+    static auto time = our_clock::now();
+    io.checkKeyboard();
     cia1.run();
     runCycle(nullptr);
     vic.run();
+    current_cycle++;
 
-    our_ns time = our_clock::now() - before;
-    std::this_thread::sleep_for(std::chrono::duration<double>(1/1000000) - time);
+//    our_ns time = our_clock::now() - before;
+//    std::this_thread::sleep_for((clock_speed) - time);
+//    before = our_clock::now();
+
+
+    if (current_cycle == 100) {
+        time += clock_speed * 100;
+        std::this_thread::sleep_until(time);
+        current_cycle = 0;
+    }
+
 //    std::cout << std::chrono::duration<double>(1/1000000) - time << "\n";
 }
 
 static void setPtrs() {
+    cia1.setIo(&io);
     vic.setCRAM(&cram);
     vic.setMemory(&mem);
     vic.setCIA2(&cia2);
