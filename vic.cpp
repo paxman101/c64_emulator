@@ -211,7 +211,6 @@ void Vic::draw() {
         }
 
         // Check if we should draw border. Border preempts all other layers.
-        updateBorderStates(our_x);
         if (main_border_ff_) {
             colors = palette[registers_[EC] & 0xF];
         }
@@ -219,6 +218,7 @@ void Vic::draw() {
             bool pix_val = (g_val & (1 << i)) >> i;
             colors = pix_val ? palette[cram_color] : bg_color_vals;
         }
+        updateBorderStates(our_x);
 
         uint16_t screen_x =
                 our_x >= first_visible_x_coord ? our_x - first_visible_x_coord : (max_x_coord - first_visible_x_coord) +
