@@ -58,7 +58,6 @@ auto clock_speed = 1000ns;
 void run() {
     static unsigned current_cycle = 0;
     static auto time = our_clock::now();
-    io.checkKeyboard();
     cia1.run();
     runCycle(nullptr);
     vic.run();
@@ -73,6 +72,7 @@ void run() {
         time += clock_speed * 100;
         std::this_thread::sleep_until(time);
         current_cycle = 0;
+        io.checkKeyboard();
     }
 
 //    std::cout << std::chrono::duration<double>(1/1000000) - time << "\n";
