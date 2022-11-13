@@ -115,7 +115,7 @@ void Vic::updateStates() {
 }
 
 void Vic::updateBorderStates(uint16_t x) {
-    // bit 3 of control registers refer to rsel and csel respectively
+    // bit 3 of control registers 1 and 2 refer to rsel and csel respectively
     bool rsel = (registers_[CTRL1] & 0x08) >> 3;
     bool csel = (registers_[CTRL2] & 0x08) >> 3;
 
@@ -191,9 +191,11 @@ void Vic::draw() {
     const uint8_t *colors;
 
     // TODO: Figure out what's causing us to need the -1
+    // c-access to video matrix
     uint16_t c_addr = vc_ + -1 + screen_addr;
     uint8_t c_val = getMem(c_addr);
 
+    // g-access to character generator
     uint16_t g_addr = is_display_state_ ?  rc_ + (c_val << 3) + char_addr : 0x3fff;
     uint8_t g_val = getMem(g_addr);
 

@@ -109,7 +109,7 @@ private:
     bool is_display_state_ = false;
 
     // Get memory with respect to the VICs view of memory.
-    // The VIC can only address 16 kB of memory by itself with the two other bits requried for adressing the full
+    // The VIC can only address 16 kB of memory by itself with the two other bits required for addressing the full
     // 64 kB of memory being provided by the CIA 2.
     // The VIC also has the character generator ROM mapped in at 0x1000 in banks 0 and 2.
     uint8_t getMem(uint16_t address);
